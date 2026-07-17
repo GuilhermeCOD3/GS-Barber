@@ -20,6 +20,7 @@ body {
     border: 1px solid var(--border);
     border-radius: 1.2rem;
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(8px);
 }
 
 .eyebrow {
@@ -51,13 +52,17 @@ body {
     color: #111;
 }
 
-.form-control {
+.form-control,
+.form-select,
+textarea {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid var(--border);
     color: var(--text-light);
 }
 
-.form-control:focus {
+.form-control:focus,
+.form-select:focus,
+textarea:focus {
     background: rgba(255, 255, 255, 0.08);
     border-color: var(--gold);
     box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25);
@@ -68,4 +73,106 @@ body {
     background: transparent;
     color: var(--text-light);
     border-color: var(--border);
+}
+
+.agenda-grid {
+    display: grid;
+    gap: 0.8rem;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.agenda-day {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 0.75rem;
+}
+
+.agenda-day-title {
+    color: var(--gold);
+    font-weight: 700;
+    margin-bottom: 0.65rem;
+    font-size: 0.95rem;
+}
+
+.agenda-slot {
+    width: 100%;
+    border: 1px solid rgba(212, 175, 55, 0.18);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-light);
+    border-radius: 0.7rem;
+    padding: 0.5rem;
+    text-align: left;
+    margin-bottom: 0.45rem;
+    font-size: 0.8rem;
+}
+
+.agenda-slot.ocupado {
+    background: rgba(212, 175, 55, 0.16);
+    border-color: rgba(212, 175, 55, 0.38);
+}
+
+.agenda-slot-hora {
+    display: block;
+    color: var(--gold);
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+}
+
+.agenda-slot-nome {
+    display: block;
+    font-size: 0.78rem;
+    line-height: 1.2;
+}
+
+.agenda-slot-vazio {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+}
+
+.modal-editar {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 2000;
+}
+
+.modal-editar-dialog {
+    width: min(100%, 560px);
+    background: #111;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 1.2rem;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.modal-editar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.btn-editar,
+.btn-remover {
+    border-radius: 0.7rem;
+}
+
+.btn-editar {
+    background: rgba(212, 175, 55, 0.14);
+    color: var(--gold);
+    border: 1px solid rgba(212, 175, 55, 0.28);
+}
+
+.btn-remover {
+    background: rgba(220, 53, 69, 0.14);
+    color: #ffb3bb;
+    border: 1px solid rgba(220, 53, 69, 0.26);
 }

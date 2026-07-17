@@ -1,12 +1,25 @@
-// Painel do barbeiro com login simples, sessão e integração opcional ao Firebase.
+// Painel do barbeiro com login simples, sessão, agenda visual e edição de agendamentos.
 const formularioLogin = document.getElementById('form-login');
 const mensagemLogin = document.getElementById('mensagem-login');
 const areaPainel = document.getElementById('area-painel');
 const listaPainel = document.getElementById('lista-painel');
+const agendaPainel = document.getElementById('agenda-painel');
 const botaoSair = document.getElementById('botao-sair');
+const modalEditar = document.getElementById('modal-editar');
+const botaoFecharModal = document.getElementById('botao-fechar-modal');
+const botaoCancelarEdicao = document.getElementById('botao-cancelar-edicao');
+const formularioEditar = document.getElementById('form-editar-agendamento');
+const inputEditarId = document.getElementById('editar-id');
+const inputEditarNome = document.getElementById('editar-nome');
+const inputEditarTelefone = document.getElementById('editar-telefone');
+const selectEditarServico = document.getElementById('editar-servico');
+const inputEditarData = document.getElementById('editar-data');
+const inputEditarHorario = document.getElementById('editar-horario');
+const textareaEditarObservacoes = document.getElementById('editar-observacoes');
 
 const usuarioPadrao = 'barbeiro';
 const senhaPadrao = '123456';
+const horariosAgenda = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
 
 let firestore = null;
 let firebaseDisponivel = false;
@@ -15,6 +28,22 @@ function mostrarMensagem(texto, tipo) {
     mensagemLogin.className = `alert alert-${tipo}`;
     mensagemLogin.textContent = texto;
     mensagemLogin.classList.remove('d-none');
+}
+
+function escaparHTML(texto) {
+    return String(texto ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function normalizarAgendamentos(agendamentos) {
+    return (agendamentos || []).map((item, indice) => ({
+        ...item,
+        id: item.id || `ag-${Date.now()}-${indice}`
+    }));
 }
 
 function inicializarFirebase() {
@@ -44,14 +73,20 @@ function salvarLocalmente(agendamentos) {
 }
 
 async function carregarAgendamentos() {
-    const agendamentosLocais = JSON.parse(localStorage.getItem('agendamentosGS') || '[]');
+    const agendamentosLocais = normalizarAgendamentos(JSON.parse(localStorage.getItem('agendamentosGS') || '[]'));
 
     if (firebaseDisponivel && firestore) {
         try {
             const snapshot = await firestore.collection('agendamentos').orderBy('criadoEm', 'asc').get();
-            const agendamentosRemotos = snapshot.docs.map((doc) => doc.data());
+            const agendamentosRemotos = snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
 
-            const todos = [...agendamentosLocais, ...agendamentosRemotos.filter((item) => !agendamentosLocais.some((local) => local.id === item.id))];
+            const todos = [...agendamentosLocais];
+            agendamentosRemotos.forEach((item) => {
+                if (!todos.some((local) => local.id === item.id)) {
+                    todos.push(item);
+                }
+            });
+
             salvarLocalmente(todos);
             renderizarAgendamentos(todos);
             return;
@@ -77,34 +112,123 @@ function formatarData(data) {
     });
 }
 
-function renderizarAgendamentos(agendamentos) {
-    listaPainel.innerHTML = '';
+function ordenarAgendamentos(agendamentos) {
+    return [...agendamentos].sort((a, b) => {
+        const ordemData = (a.data || '').localeCompare(b.data || '');
+        if (ordemData !== 0) return ordemData;
+        return (a.horario || '').localeCompare(b.horario || '');
+    });
+}
+
+function gerarDiasAgenda(quantidade = 7) {
+    const dias = [];
+    const hoje = new Date();
+
+    for (let indice = 0; indice < quantidade; indice += 1) {
+        const data = new Date(hoje);
+        data.setDate(hoje.getDate() + indice);
+
+        const valor = data.toISOString().split('T')[0];
+        const label = data.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit' });
+        dias.push({ valor, label });
+    }
+
+    return dias;
+}
+
+function renderizarAgenda(agendamentos) {
+    agendaPainel.innerHTML = '';
 
     if (agendamentos.length === 0) {
+        agendaPainel.innerHTML = '<div class="text-muted">Nenhum agendamento cadastrado ainda.</div>';
+        return;
+    }
+
+    const dias = gerarDiasAgenda(7);
+    const grid = document.createElement('div');
+    grid.className = 'agenda-grid';
+
+    dias.forEach((dia) => {
+        const coluna = document.createElement('div');
+        coluna.className = 'agenda-day';
+        coluna.innerHTML = `<div class="agenda-day-title">${escaparHTML(dia.label)}</div>`;
+
+        horariosAgenda.forEach((horario) => {
+            const agendamentoDoHorario = agendamentos.find((item) => item.data === dia.valor && item.horario === horario);
+            const slot = document.createElement('button');
+            slot.type = 'button';
+            slot.className = 'agenda-slot';
+
+            if (agendamentoDoHorario) {
+                slot.classList.add('ocupado');
+                slot.innerHTML = `<span class="agenda-slot-hora">${escaparHTML(horario)}</span><span class="agenda-slot-nome">${escaparHTML(agendamentoDoHorario.nome)}</span>`;
+                slot.dataset.id = agendamentoDoHorario.id;
+            } else {
+                slot.innerHTML = `<span class="agenda-slot-hora">${escaparHTML(horario)}</span><span class="agenda-slot-vazio">Livre</span>`;
+            }
+
+            slot.addEventListener('click', () => {
+                if (agendamentoDoHorario) {
+                    abrirModalEditar(agendamentoDoHorario);
+                }
+            });
+
+            coluna.appendChild(slot);
+        });
+
+        grid.appendChild(coluna);
+    });
+
+    agendaPainel.appendChild(grid);
+}
+
+function renderizarAgendamentos(agendamentos) {
+    const agendamentosOrdenados = ordenarAgendamentos(agendamentos);
+    listaPainel.innerHTML = '';
+    renderizarAgenda(agendamentosOrdenados);
+
+    if (agendamentosOrdenados.length === 0) {
         listaPainel.innerHTML = '<div class="list-group-item text-muted">Nenhum agendamento encontrado.</div>';
         return;
     }
 
-    agendamentos.forEach((agendamento, indice) => {
+    agendamentosOrdenados.forEach((agendamento) => {
         const item = document.createElement('div');
         item.className = 'list-group-item';
         item.innerHTML = `
-            <div class="d-flex justify-content-between gap-3 flex-wrap">
+            <div class="d-flex justify-content-between gap-3 flex-wrap align-items-start">
                 <div>
-                    <strong>${agendamento.nome}</strong><br>
-                    <span class="text-muted">${agendamento.servico}</span><br>
-                    <span class="text-muted">${formatarData(agendamento.data)}</span><br>
-                    <span class="text-muted">${agendamento.horario}</span><br>
-                    <span class="text-muted">${agendamento.telefone}</span>
+                    <strong>${escaparHTML(agendamento.nome)}</strong><br>
+                    <span class="text-muted">${escaparHTML(agendamento.servico)}</span><br>
+                    <span class="text-muted">${escaparHTML(formatarData(agendamento.data))}</span><br>
+                    <span class="text-muted">${escaparHTML(agendamento.horario)}</span><br>
+                    <span class="text-muted">${escaparHTML(agendamento.telefone)}</span>
                 </div>
                 <div class="text-end">
-                    <span class="badge bg-gold text-dark mb-2">${agendamento.horario}</span><br>
-                    <button class="btn btn-sm btn-outline-gold remover" data-indice="${indice}">Remover</button>
+                    <span class="badge bg-gold text-dark mb-2">${escaparHTML(agendamento.horario)}</span><br>
+                    <button class="btn btn-sm btn-editar me-2" data-acao="editar" data-id="${escaparHTML(agendamento.id || '')}">Editar</button>
+                    <button class="btn btn-sm btn-remover" data-acao="remover" data-id="${escaparHTML(agendamento.id || '')}">Remover</button>
                 </div>
             </div>
         `;
         listaPainel.appendChild(item);
     });
+}
+
+function abrirModalEditar(agendamento) {
+    inputEditarId.value = agendamento.id || '';
+    inputEditarNome.value = agendamento.nome || '';
+    inputEditarTelefone.value = agendamento.telefone || '';
+    selectEditarServico.value = agendamento.servico || 'Corte';
+    inputEditarData.value = agendamento.data || '';
+    inputEditarHorario.value = agendamento.horario || '';
+    textareaEditarObservacoes.value = agendamento.observacoes || '';
+    modalEditar.classList.remove('d-none');
+}
+
+function fecharModalEditar() {
+    modalEditar.classList.add('d-none');
+    formularioEditar.reset();
 }
 
 function entrarNoPainel() {
@@ -120,13 +244,28 @@ function sairDoPainel() {
     formularioLogin.reset();
     mensagemLogin.className = 'alert d-none';
     mensagemLogin.textContent = '';
+    fecharModalEditar();
 }
 
-async function removerAgendamento(indice) {
-    const agendamentos = JSON.parse(localStorage.getItem('agendamentosGS') || '[]');
-    const agendamentoRemovido = agendamentos[indice];
-    agendamentos.splice(indice, 1);
-    salvarLocalmente(agendamentos);
+async function atualizarAgendamentoNoFirebase(agendamento) {
+    if (!firebaseDisponivel || !firestore || !agendamento.id) {
+        return false;
+    }
+
+    try {
+        await firestore.collection('agendamentos').doc(agendamento.id).set(agendamento, { merge: true });
+        return true;
+    } catch (erro) {
+        console.warn('Erro ao atualizar no Firebase:', erro);
+        return false;
+    }
+}
+
+async function removerAgendamento(id) {
+    const agendamentos = normalizarAgendamentos(JSON.parse(localStorage.getItem('agendamentosGS') || '[]'));
+    const agendamentoRemovido = agendamentos.find((item) => item.id === id);
+    const agendamentosAtualizados = agendamentos.filter((item) => item.id !== id);
+    salvarLocalmente(agendamentosAtualizados);
 
     if (firebaseDisponivel && firestore && agendamentoRemovido?.id) {
         try {
@@ -137,6 +276,26 @@ async function removerAgendamento(indice) {
     }
 
     carregarAgendamentos();
+}
+
+async function salvarEdicao(agendamentoAtualizado) {
+    const agendamentos = normalizarAgendamentos(JSON.parse(localStorage.getItem('agendamentosGS') || '[]'));
+    const indice = agendamentos.findIndex((item) => item.id === agendamentoAtualizado.id);
+
+    if (indice !== -1) {
+        agendamentos[indice] = { ...agendamentos[indice], ...agendamentoAtualizado };
+        salvarLocalmente(agendamentos);
+    }
+
+    const salvoNoFirebase = await atualizarAgendamentoNoFirebase(agendamentoAtualizado);
+    carregarAgendamentos();
+    fecharModalEditar();
+
+    if (salvoNoFirebase) {
+        mostrarMensagem('Agendamento atualizado com sucesso.', 'success');
+    } else {
+        mostrarMensagem('Agendamento atualizado localmente.', 'warning');
+    }
 }
 
 formularioLogin.addEventListener('submit', (evento) => {
@@ -153,11 +312,52 @@ formularioLogin.addEventListener('submit', (evento) => {
 });
 
 botaoSair.addEventListener('click', sairDoPainel);
+botaoFecharModal.addEventListener('click', fecharModalEditar);
+botaoCancelarEdicao.addEventListener('click', fecharModalEditar);
 
-listaPainel.addEventListener('click', (evento) => {
-    if (evento.target.classList.contains('remover')) {
-        const indice = Number(evento.target.dataset.indice);
-        removerAgendamento(indice);
+formularioEditar.addEventListener('submit', async (evento) => {
+    evento.preventDefault();
+
+    const id = inputEditarId.value.trim();
+    const dadosAtualizados = {
+        id,
+        nome: inputEditarNome.value.trim(),
+        telefone: inputEditarTelefone.value.trim(),
+        servico: selectEditarServico.value,
+        data: inputEditarData.value,
+        horario: inputEditarHorario.value,
+        observacoes: textareaEditarObservacoes.value.trim()
+    };
+
+    if (!dadosAtualizados.id || !dadosAtualizados.nome || !dadosAtualizados.telefone || !dadosAtualizados.data || !dadosAtualizados.horario) {
+        mostrarMensagem('Preencha os campos obrigatórios para salvar.', 'danger');
+        return;
+    }
+
+    await salvarEdicao(dadosAtualizados);
+});
+
+listaPainel.addEventListener('click', async (evento) => {
+    const botao = evento.target.closest('button');
+    if (!botao) return;
+
+    const id = botao.dataset.id;
+    if (botao.dataset.acao === 'remover') {
+        await removerAgendamento(id);
+    }
+
+    if (botao.dataset.acao === 'editar') {
+        const agendamentos = normalizarAgendamentos(JSON.parse(localStorage.getItem('agendamentosGS') || '[]'));
+        const agendamento = agendamentos.find((item) => item.id === id);
+        if (agendamento) {
+            abrirModalEditar(agendamento);
+        }
+    }
+});
+
+modalEditar.addEventListener('click', (evento) => {
+    if (evento.target === modalEditar) {
+        fecharModalEditar();
     }
 });
 

@@ -53,6 +53,11 @@ header {
     border: 1px solid var(--border);
     border-radius: 1.2rem;
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(8px);
+}
+
+main {
+    padding-bottom: 2rem;
 }
 
 .eyebrow {
