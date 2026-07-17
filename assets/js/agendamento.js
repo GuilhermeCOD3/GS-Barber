@@ -3,7 +3,8 @@
 
 const diasParaExibir = 14;
 const horariosPadrao = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
-const agendamentosSalvos = JSON.parse(localStorage.getItem('agendamentosGS') || '[]');
+const permitirHorariosDuplicados = true;
+let agendamentosSalvos = [];
 
 const selectData = document.getElementById('data');
 const inputHorario = document.getElementById('horario');
@@ -15,8 +16,25 @@ const mensagem = document.getElementById('mensagem');
 let firestore = null;
 let firebaseDisponivel = false;
 
+function carregarAgendamentos() {
+    try {
+        const dadosSalvos = JSON.parse(localStorage.getItem('agendamentosGS') || '[]');
+        agendamentosSalvos = Array.isArray(dadosSalvos) ? dadosSalvos : [];
+    } catch (erro) {
+        console.warn('Não foi possível carregar os agendamentos salvos:', erro);
+        agendamentosSalvos = [];
+    }
+}
+
 function salvarLocalmente() {
     localStorage.setItem('agendamentosGS', JSON.stringify(agendamentosSalvos));
+}
+
+function sincronizarAgendamentos() {
+    carregarAgendamentos();
+    popularDatas();
+    popularHorarios();
+    mostrarAgendamentos();
 }
 
 function inicializarFirebase() {
@@ -113,7 +131,9 @@ function popularHorarios() {
 
     const mensagemInicial = document.createElement('p');
     mensagemInicial.className = 'text-muted mb-0 w-100';
-    mensagemInicial.textContent = 'Escolha um horário disponível:';
+    mensagemInicial.textContent = permitirHorariosDuplicados
+        ? 'Escolha o horário desejado:'
+        : 'Escolha um horário disponível:';
     containerHorarios.appendChild(mensagemInicial);
 
     if (horarios.length === 0 && ocupados.length === 0) {
@@ -130,16 +150,18 @@ function popularHorarios() {
         botao.className = 'horario-btn';
         botao.textContent = `${horario}`;
 
-        if (ocupados.includes(horario)) {
-            botao.disabled = true;
+        const jaOcupado = ocupados.includes(horario);
+
+        if (jaOcupado) {
+            botao.classList.add('ocupado');
             botao.textContent = `${horario} (ocupado)`;
-        } else {
-            botao.addEventListener('click', () => {
-                document.querySelectorAll('.horario-btn').forEach((item) => item.classList.remove('ativo'));
-                botao.classList.add('ativo');
-                inputHorario.value = horario;
-            });
         }
+
+        botao.addEventListener('click', () => {
+            document.querySelectorAll('.horario-btn').forEach((item) => item.classList.remove('ativo'));
+            botao.classList.add('ativo');
+            inputHorario.value = horario;
+        });
 
         containerHorarios.appendChild(botao);
     });
@@ -188,6 +210,7 @@ formulario.addEventListener('submit', async (evento) => {
         return;
     }
 
+    carregarAgendamentos();
     agendamentosSalvos.push(dados);
     salvarLocalmente();
 
@@ -203,12 +226,22 @@ formulario.addEventListener('submit', async (evento) => {
     window.open(`https://wa.me/5528999325487?text=${mensagemWhatsApp}`, '_blank', 'noopener,noreferrer');
 
     formulario.reset();
+    carregarAgendamentos();
     popularHorarios();
     mostrarAgendamentos();
 });
 
 selectData.addEventListener('change', popularHorarios);
+window.addEventListener('storage', (evento) => {
+    if (evento.key === 'agendamentosGS') {
+        sincronizarAgendamentos();
+    }
+});
+window.addEventListener('focus', () => {
+    sincronizarAgendamentos();
+});
 inicializarFirebase();
+carregarAgendamentos();
 popularDatas();
 popularHorarios();
 mostrarAgendamentos();

@@ -63,6 +63,20 @@ async function carregarAgendamentos() {
     renderizarAgendamentos(agendamentosLocais);
 }
 
+function formatarData(data) {
+    if (!data) return 'Data não informada';
+
+    const [ano, mes, dia] = data.split('-').map(Number);
+    const dataObj = new Date(ano, mes - 1, dia);
+
+    return dataObj.toLocaleDateString('pt-BR', {
+        weekday: 'long',
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+    });
+}
+
 function renderizarAgendamentos(agendamentos) {
     listaPainel.innerHTML = '';
 
@@ -75,10 +89,12 @@ function renderizarAgendamentos(agendamentos) {
         const item = document.createElement('div');
         item.className = 'list-group-item';
         item.innerHTML = `
-            <div class="d-flex justify-content-between gap-3">
+            <div class="d-flex justify-content-between gap-3 flex-wrap">
                 <div>
                     <strong>${agendamento.nome}</strong><br>
-                    <span class="text-muted">${agendamento.servico} • ${agendamento.data} às ${agendamento.horario}</span><br>
+                    <span class="text-muted">${agendamento.servico}</span><br>
+                    <span class="text-muted">${formatarData(agendamento.data)}</span><br>
+                    <span class="text-muted">${agendamento.horario}</span><br>
                     <span class="text-muted">${agendamento.telefone}</span>
                 </div>
                 <div class="text-end">
