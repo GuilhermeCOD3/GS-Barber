@@ -94,6 +94,18 @@ header {
     margin-bottom: 1rem;
 }
 
+.section-title,
+.hero h1,
+.hero .lead,
+.text-muted,
+.map-card p,
+.contact-card p,
+.contact-card h3,
+.section .text-muted,
+.section p {
+    color: #f7f2e8 !important;
+}
+
 .hero h1 {
     color: #fff;
     font-size: clamp(2rem, 4vw, 3.5rem);
@@ -166,6 +178,11 @@ header {
     border: 1px solid var(--border);
 }
 
+.map-card p,
+.map-card i {
+    color: #f7f2e8 !important;
+}
+
 .map-card iframe {
     width: 100%;
     min-height: 280px;
@@ -178,6 +195,12 @@ header {
     border: 1px solid var(--border);
     border-radius: 1.2rem;
     padding: 1.5rem;
+}
+
+.contact-card p,
+.contact-card h3,
+.contact-card strong {
+    color: #f7f2e8 !important;
 }
 
 /* Rodapé */
