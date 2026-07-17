@@ -1,0 +1,17 @@
+[
+  {
+    "nome": "Corte",
+    "descricao": "Cortes modernos, limpos e personalizados para o seu estilo.",
+    "icone": "✂️"
+  },
+  {
+    "nome": "Barba",
+    "descricao": "Modelagem e acabamento profissional para uma barba impecável.",
+    "icone": "🪒"
+  },
+  {
+    "nome": "Corte + Barba",
+    "descricao": "Combo completo com visual elegante e cuidado total.",
+    "icone": "💈"
+  }
+]

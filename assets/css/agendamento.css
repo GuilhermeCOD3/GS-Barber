@@ -1,0 +1,142 @@
+:root {
+    --bg-dark: #050505;
+    --text-light: #f5f2e8;
+    --text-muted: #bdb7a7;
+    --gold: #d4af37;
+    --gold-soft: #f1c96b;
+    --border: rgba(212, 175, 55, 0.28);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: linear-gradient(135deg, #050505 0%, #111111 60%, #17120a 100%);
+    color: var(--text-light);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+}
+
+header {
+    background: rgba(5, 5, 5, 0.95);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(8px);
+}
+
+.navbar-brand {
+    color: var(--gold) !important;
+    letter-spacing: 0.2rem;
+}
+
+.btn-gold {
+    background: linear-gradient(135deg, var(--gold), var(--gold-soft));
+    color: #111;
+    font-weight: 600;
+    border: none;
+}
+
+.btn-outline-gold {
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    background: transparent;
+}
+
+.btn-outline-gold:hover {
+    background: var(--gold);
+    color: #111;
+}
+
+.card-panel {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    border-radius: 1.2rem;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+.eyebrow {
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.2rem;
+    font-weight: 700;
+}
+
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+.border-gold {
+    border-color: var(--border) !important;
+}
+
+.form-control,
+.form-select,
+textarea {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border);
+    color: var(--text-light);
+}
+
+.form-control::placeholder,
+textarea::placeholder {
+    color: #8f8870;
+}
+
+.form-control:focus,
+.form-select:focus,
+textarea:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--gold);
+    box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25);
+    color: var(--text-light);
+}
+
+.list-group-item {
+    background: transparent;
+    color: var(--text-light);
+    border-color: var(--border);
+}
+
+.horario-btn {
+    border: 1px solid #2f7d32;
+    background: rgba(47, 125, 50, 0.18);
+    color: #dff5e0;
+    border-radius: 0.8rem;
+    padding: 0.7rem 1rem;
+    min-width: 90px;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.horario-btn:hover {
+    transform: translateY(-2px);
+    background: rgba(47, 125, 50, 0.28);
+}
+
+.horario-btn.ativo {
+    background: var(--gold);
+    color: #111;
+    border-color: var(--gold);
+}
+
+.horario-btn:disabled {
+    background: rgba(255, 255, 255, 0.08);
+    color: #7a7666;
+    border-color: rgba(255, 255, 255, 0.12);
+    cursor: not-allowed;
+}
+
+footer {
+    background: #060606;
+}
+
+.alert-info-custom {
+    background: rgba(212, 175, 55, 0.12);
+    border: 1px solid var(--border);
+    color: var(--text-light);
+    border-radius: 0.9rem;
+}
+
+#resumo-agendamento {
+    font-size: 0.95rem;
+}

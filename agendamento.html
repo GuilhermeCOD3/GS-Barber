@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendar | GS Barber</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="assets/css/agendamento.css">
+</head>
+<body>
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg container py-3">
+            <a class="navbar-brand fw-bold" href="index.html">GS BARBER</a>
+            <a class="btn btn-outline-gold ms-auto" href="index.html">Voltar</a>
+        </nav>
+    </header>
+
+    <main class="container py-5">
+        <section class="row g-4">
+            <div class="col-lg-7">
+                <div class="card-panel">
+                    <div class="card-body p-4 p-lg-5">
+                        <p class="eyebrow">Agendamento</p>
+                        <h1 class="display-6 fw-bold mb-3">Reserve o seu horário com facilidade</h1>
+                        <p class="text-muted mb-4">
+                            Escolha um serviço, uma data e veja os horários disponíveis em tempo real.
+                        </p>
+
+                        <div class="alert alert-info-custom mb-4">
+                            <i class="bi bi-whatsapp me-2 text-gold"></i>
+                            Após confirmar, você será direcionado para o WhatsApp com os dados do agendamento.
+                        </div>
+
+                        <form id="form-agendamento">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="nome" class="form-label">Seu nome</label>
+                                    <input type="text" id="nome" class="form-control" placeholder="Ex.: João Silva" required>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="telefone" class="form-label">Telefone</label>
+                                    <input type="tel" id="telefone" class="form-control" placeholder="(27) 99999-9999" required>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="servico" class="form-label">Serviço</label>
+                                    <select id="servico" class="form-select" required>
+                                        <option value="">Selecione</option>
+                                        <option value="Corte">Corte</option>
+                                        <option value="Barba">Barba</option>
+                                        <option value="Corte + Barba">Corte + Barba</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="data" class="form-label">Data</label>
+                                    <select id="data" class="form-select" required></select>
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label">Horário</label>
+                                    <div id="horarios-container" class="d-flex flex-wrap gap-2"></div>
+                                    <input type="hidden" id="horario" name="horario">
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="observacoes" class="form-label">Observações</label>
+                                    <textarea id="observacoes" class="form-control" rows="3" placeholder="Descreva algo que o barbeiro deva saber"></textarea>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-gold w-100 mt-4">Confirmar agendamento</button>
+                        </form>
+
+                        <div id="mensagem" class="alert mt-3 d-none" role="alert"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="card-panel">
+                    <div class="card-body p-4 p-lg-5">
+                        <p class="eyebrow">Resumo</p>
+                        <h2 class="h4 fw-bold mb-3">Horários reservados</h2>
+                        <p class="text-muted mb-4">
+                            Os horários já marcados ficam bloqueados automaticamente para evitar conflitos.
+                        </p>
+
+                        <ul id="lista-agendamentos" class="list-group list-group-flush"></ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="py-4 border-top border-gold">
+        <div class="container text-center text-muted">
+            <span>GS Barber • Agendamento simples, elegante e profissional.</span>
+        </div>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+    <script src="firebase/firebase-config.js"></script>
+    <script src="assets/js/agendamento.js"></script>
+</body>
+</html>

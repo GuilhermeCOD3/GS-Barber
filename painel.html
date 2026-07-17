@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel | GS Barber</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/painel.css">
+</head>
+<body>
+    <main class="container py-5">
+        <section class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card-panel p-4 p-lg-5">
+                    <div class="text-center mb-4">
+                        <p class="eyebrow">Painel do barbeiro</p>
+                        <h1 class="h2 fw-bold">GS Barber</h1>
+                        <p class="text-muted">Acesse os agendamentos e organize o dia.</p>
+                    </div>
+
+                    <form id="form-login" class="mb-4">
+                        <div class="mb-3">
+                            <label for="usuario" class="form-label">Usuário</label>
+                            <input type="text" id="usuario" class="form-control" placeholder="Digite o usuário" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="senha" class="form-label">Senha</label>
+                            <input type="password" id="senha" class="form-control" placeholder="Digite a senha" required>
+                        </div>
+                        <button type="submit" class="btn btn-gold w-100">Entrar</button>
+                    </form>
+
+                    <div id="mensagem-login" class="alert d-none" role="alert"></div>
+
+                    <section id="area-painel" class="d-none">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h2 class="h4 mb-0">Agendamentos</h2>
+                            <div class="d-flex gap-2">
+                                <button id="botao-sair" class="btn btn-outline-gold btn-sm">Sair</button>
+                                <a href="index.html" class="btn btn-outline-gold btn-sm">Voltar</a>
+                            </div>
+                        </div>
+                        <div id="lista-painel" class="list-group"></div>
+                    </section>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+    <script src="firebase/firebase-config.js"></script>
+    <script src="assets/js/painel.js"></script>
+</body>
+</html>

@@ -1,0 +1,212 @@
+/* Configurações gerais */
+:root {
+    --bg-dark: #050505;
+    --bg-panel: #121212;
+    --text-light: #f5f2e8;
+    --text-muted: #bdb7a7;
+    --gold: #d4af37;
+    --gold-soft: #f1c96b;
+    --border: rgba(212, 175, 55, 0.28);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background: linear-gradient(135deg, #050505 0%, #111111 60%, #17120a 100%);
+    color: var(--text-light);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+}
+
+img {
+    max-width: 100%;
+    display: block;
+}
+
+a {
+    text-decoration: none;
+}
+
+/* Header */
+header {
+    background: rgba(5, 5, 5, 0.95);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(8px);
+}
+
+.navbar-brand {
+    color: var(--gold) !important;
+    letter-spacing: 0.25rem;
+    font-size: 1.2rem;
+}
+
+.btn-gold {
+    background: linear-gradient(135deg, var(--gold), var(--gold-soft));
+    color: #111;
+    border: none;
+    font-weight: 600;
+}
+
+.btn-gold:hover {
+    color: #111;
+    transform: translateY(-1px);
+}
+
+.btn-outline-gold {
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    background: transparent;
+}
+
+.btn-outline-gold:hover {
+    background: var(--gold);
+    color: #111;
+}
+
+/* Hero */
+.hero {
+    position: relative;
+    overflow: hidden;
+    padding: 4rem 0 3rem;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(212, 175, 55, 0.18), transparent 35%);
+    pointer-events: none;
+}
+
+.eyebrow {
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.hero h1 {
+    color: #fff;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    line-height: 1.1;
+}
+
+.hero .lead {
+    color: var(--text-muted) !important;
+    max-width: 650px;
+}
+
+.hero-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+}
+
+/* Seções */
+.section {
+    padding: 5rem 0;
+}
+
+.section-dark {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.section-title {
+    color: #fff;
+    margin-bottom: 1rem;
+}
+
+.text-gold {
+    color: var(--gold) !important;
+}
+
+.border-gold {
+    border-color: var(--border) !important;
+}
+
+/* Serviços */
+.service-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    border-radius: 1.2rem;
+    padding: 1.5rem;
+    height: 100%;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.service-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--gold);
+}
+
+.service-icon {
+    font-size: 2rem;
+    color: var(--gold);
+    margin-bottom: 1rem;
+}
+
+/* Localização */
+.map-card {
+    border-radius: 1.2rem;
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+.map-card iframe {
+    width: 100%;
+    min-height: 280px;
+    border: 0;
+}
+
+/* Contato */
+.contact-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    border-radius: 1.2rem;
+    padding: 1.5rem;
+}
+
+/* Rodapé */
+footer {
+    background: #060606;
+    color: var(--text-muted);
+}
+
+/* Botão flutuante de WhatsApp */
+.btn-whatsapp-float {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 1050;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--gold-soft));
+    color: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+}
+
+.btn-whatsapp-float:hover {
+    color: #111;
+    transform: scale(1.03);
+}
+
+/* Responsividade */
+@media (min-width: 992px) {
+    .hero {
+        padding: 6rem 0 5rem;
+    }
+}
