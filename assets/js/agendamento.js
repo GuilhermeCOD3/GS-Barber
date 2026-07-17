@@ -1,7 +1,7 @@
 // Lógica do formulário de agendamento da GS Barber.
 // A ideia é manter o fluxo simples, com persistência local e sincronização opcional ao Firebase.
 
-const diasParaExibir = 5;
+const diasParaExibir = 14;
 const horariosPadrao = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
 const agendamentosSalvos = JSON.parse(localStorage.getItem('agendamentosGS') || '[]');
 
@@ -70,7 +70,11 @@ function gerarDatas() {
         }
 
         const valor = data.toISOString().split('T')[0];
-        const label = data.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
+        const label = data.toLocaleDateString('pt-BR', {
+            weekday: 'long',
+            day: '2-digit',
+            month: 'long'
+        });
         datas.push({ valor, label });
     }
 

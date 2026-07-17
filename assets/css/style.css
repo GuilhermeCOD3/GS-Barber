@@ -148,6 +148,11 @@ header {
     border-color: var(--gold);
 }
 
+.service-card .text-muted,
+.service-card p {
+    color: var(--text-light) !important;
+}
+
 .service-icon {
     font-size: 2rem;
     color: var(--gold);
