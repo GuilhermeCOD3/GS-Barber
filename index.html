@@ -20,8 +20,8 @@
     <header class="sticky-top">
         <nav class="navbar navbar-expand-lg container py-3">
             <a class="navbar-brand fw-bold text-gold d-flex align-items-center gap-2" href="#home">
-                <img src="assets/img/icons/WhatsApp Image 2026-07-17 at 18.20.46.jpeg" alt="Logo GS Barber" class="img-fluid rounded-circle" style="width: 58px; height: 58px; object-fit: cover; border: 2px solid rgba(212, 175, 55, 0.45); box-shadow: 0 0 0 2px rgba(255,255,255,0.03);">
-                <span class="fw-semibold" style="font-size: 1.05rem; letter-spacing: 0.18rem; color: #f7eecf;">GS BARBER</span>
+                <img data-logo-barbearia src="assets/img/icons/WhatsApp Image 2026-07-17 at 18.20.46.jpeg" alt="Logo GS Barber" class="img-fluid rounded-circle" style="width: 58px; height: 58px; object-fit: cover; border: 2px solid rgba(212, 175, 55, 0.45); box-shadow: 0 0 0 2px rgba(255,255,255,0.03);">
+                <span id="nome-barbearia-home" class="fw-semibold" style="font-size: 1.05rem; letter-spacing: 0.18rem; color: #f7eecf;">GS BARBER</span>
             </a>
             <div class="d-flex gap-2 ms-auto">
                 <a class="btn btn-outline-gold" href="agendamento.html">Agendar</a>
@@ -37,7 +37,7 @@
                 <div class="row align-items-center g-5">
                     <div class="col-lg-7">
                         <span class="hero-badge"><i class="bi bi-stars"></i> Atendimento premium</span>
-                        <p class="eyebrow">Barbearia premium</p>
+                        <p id="descricao-barbearia" class="eyebrow">Barbearia premium</p>
                         <h1 class="display-4 fw-bold mb-3">Sua aparência, nossa prioridade.</h1>
                         <p class="lead text-muted mb-4">
                             Cortes modernos, barba impecável e atendimento acolhedor em um ambiente elegante.
@@ -52,7 +52,7 @@
                         <div class="hero-card p-4 rounded-4">
                             <h2 class="h4 text-gold">Atendimento exclusivo</h2>
                             <ul class="list-unstyled mt-3 mb-0">
-                                <li class="mb-2"><i class="bi bi-clock me-2"></i>Horários flexíveis</li>
+                                <li class="mb-2"><i class="bi bi-clock me-2"></i><span id="horario-principal-home">Horários flexíveis</span></li>
                                 <li class="mb-2"><i class="bi bi-scissors me-2"></i>Estilos modernos</li>
                                 <li><i class="bi bi-star me-2"></i>Qualidade e conforto</li>
                                 <li><i class="bi bi-chat-dots me-2"></i>Agendamento rápido pelo WhatsApp</li>
@@ -125,10 +125,10 @@
                             <p class="mb-4" style="color: #fdf7e8 !important;">
                                 Para agendamentos e dúvidas, utilize um dos canais abaixo.
                             </p>
-                            <a class="btn btn-gold w-100 mb-3" href="https://wa.me/5528999325487" target="_blank" rel="noopener noreferrer">
+                            <a class="btn btn-gold w-100 mb-3" href="https://wa.me/5528999325487" data-whatsapp-barbearia target="_blank" rel="noopener noreferrer">
                                 <i class="bi bi-whatsapp me-2"></i>WhatsApp
                             </a>
-                            <a class="btn btn-outline-gold w-100 mb-3" href="tel:+5528999325487">
+                            <a class="btn btn-outline-gold w-100 mb-3" href="tel:+5528999325487" data-telefone-barbearia>
                                 <i class="bi bi-telephone me-2"></i>Ligar agora
                             </a>
                             <a class="btn btn-outline-gold w-100" href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer">
@@ -140,7 +140,7 @@
                     <div class="col-lg-6">
                         <div class="contact-card h-100">
                             <h3 class="h5 text-gold mb-3">Atendimento</h3>
-                            <p class="mb-2" style="color: #fdf7e8 !important;"><strong>Telefone:</strong> (28) 99932-5487</p>
+                            <p class="mb-2" style="color: #fdf7e8 !important;"><strong>Telefone:</strong> <span id="telefone-principal">(28) 99932-5487</span></p>
                             <p class="mb-2" style="color: #fdf7e8 !important;"><strong>E-mail:</strong> guideoliveira369@gmail.com</p>
                             <p style="color: #fdf7e8 !important;">Estamos prontos para oferecer uma experiência elegante e profissional.</p>
                         </div>
@@ -162,6 +162,7 @@
         <i class="bi bi-whatsapp"></i>
     </a>
 
+    <script src="assets/js/config.js"></script>
     <script src="assets/js/script.js"></script>
 </body>
 </html>

@@ -5,6 +5,17 @@ const areaPainel = document.getElementById('area-painel');
 const listaPainel = document.getElementById('lista-painel');
 const agendaPainel = document.getElementById('agenda-painel');
 const labelSemanaAtual = document.getElementById('label-semana-atual');
+const botaoConfiguracoes = document.getElementById('botao-configuracoes');
+const modalConfiguracoes = document.getElementById('modal-configuracoes');
+const botaoFecharConfiguracoes = document.getElementById('botao-fechar-configuracoes');
+const botaoCancelarConfiguracoes = document.getElementById('botao-cancelar-configuracoes');
+const formularioConfiguracoes = document.getElementById('form-configuracoes');
+const inputConfigNome = document.getElementById('config-nome');
+const inputConfigLogo = document.getElementById('config-logo');
+const inputConfigTelefone = document.getElementById('config-telefone');
+const inputConfigWhatsapp = document.getElementById('config-whatsapp');
+const inputConfigHorario = document.getElementById('config-horario');
+const inputConfigDescricao = document.getElementById('config-descricao');
 const botaoSemanaAnterior = document.getElementById('botao-semana-anterior');
 const botaoHoje = document.getElementById('botao-hoje');
 const botaoSemanaSeguinte = document.getElementById('botao-semana-seguinte');
@@ -281,6 +292,26 @@ function sairDoPainel() {
     mensagemLogin.className = 'alert d-none';
     mensagemLogin.textContent = '';
     fecharModalEditar();
+    fecharModalConfiguracoes();
+}
+
+function abrirModalConfiguracoes() {
+    const config = window.gsBarberConfig?.carregarConfig();
+    const barbeiro = window.gsBarberConfig?.getBarbeiroAtivo(config);
+
+    inputConfigNome.value = barbeiro?.nome || '';
+    inputConfigLogo.value = barbeiro?.logoUrl || '';
+    inputConfigTelefone.value = barbeiro?.telefone || '';
+    inputConfigWhatsapp.value = barbeiro?.whatsapp || '';
+    inputConfigHorario.value = barbeiro?.horarioTexto || '';
+    inputConfigDescricao.value = barbeiro?.descricao || '';
+
+    modalConfiguracoes.classList.remove('d-none');
+}
+
+function fecharModalConfiguracoes() {
+    modalConfiguracoes.classList.add('d-none');
+    formularioConfiguracoes.reset();
 }
 
 async function atualizarAgendamentoNoFirebase(agendamento) {
@@ -356,6 +387,39 @@ formularioLogin.addEventListener('submit', (evento) => {
     }
 });
 
+botaoConfiguracoes.addEventListener('click', abrirModalConfiguracoes);
+botaoFecharConfiguracoes.addEventListener('click', fecharModalConfiguracoes);
+botaoCancelarConfiguracoes.addEventListener('click', fecharModalConfiguracoes);
+
+formularioConfiguracoes.addEventListener('submit', (evento) => {
+    evento.preventDefault();
+
+    const configAtual = window.gsBarberConfig?.carregarConfig();
+    const barbeiroAtivo = window.gsBarberConfig?.getBarbeiroAtivo(configAtual);
+
+    const dadosAtualizados = {
+        ...barbeiroAtivo,
+        nome: inputConfigNome.value.trim(),
+        logoUrl: inputConfigLogo.value.trim(),
+        telefone: inputConfigTelefone.value.trim(),
+        whatsapp: inputConfigWhatsapp.value.trim(),
+        horarioTexto: inputConfigHorario.value.trim(),
+        horarioInicio: barbeiroAtivo?.horarioInicio || '09:00',
+        horarioFim: barbeiroAtivo?.horarioFim || '19:00',
+        descricao: inputConfigDescricao.value.trim()
+    };
+
+    const novaConfig = {
+        ...configAtual,
+        barbeiros: configAtual.barbeiros.map((item) => item.id === barbeiroAtivo.id ? dadosAtualizados : item)
+    };
+
+    window.gsBarberConfig?.salvarConfig(novaConfig);
+    window.gsBarberConfig?.aplicarConfig(novaConfig);
+    mostrarMensagem('Configuração do barbeiro salva.', 'success');
+    fecharModalConfiguracoes();
+});
+
 botaoSemanaAnterior.addEventListener('click', () => navegarSemana(-1));
 botaoHoje.addEventListener('click', () => {
     offsetSemanas = 0;
@@ -413,6 +477,12 @@ listaPainel.addEventListener('click', async (evento) => {
 modalEditar.addEventListener('click', (evento) => {
     if (evento.target === modalEditar) {
         fecharModalEditar();
+    }
+});
+
+modalConfiguracoes.addEventListener('click', (evento) => {
+    if (evento.target === modalConfiguracoes) {
+        fecharModalConfiguracoes();
     }
 });
 
