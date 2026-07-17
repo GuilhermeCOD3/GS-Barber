@@ -4,6 +4,10 @@ const mensagemLogin = document.getElementById('mensagem-login');
 const areaPainel = document.getElementById('area-painel');
 const listaPainel = document.getElementById('lista-painel');
 const agendaPainel = document.getElementById('agenda-painel');
+const labelSemanaAtual = document.getElementById('label-semana-atual');
+const botaoSemanaAnterior = document.getElementById('botao-semana-anterior');
+const botaoHoje = document.getElementById('botao-hoje');
+const botaoSemanaSeguinte = document.getElementById('botao-semana-seguinte');
 const botaoSair = document.getElementById('botao-sair');
 const modalEditar = document.getElementById('modal-editar');
 const botaoFecharModal = document.getElementById('botao-fechar-modal');
@@ -23,6 +27,8 @@ const horariosAgenda = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '1
 
 let firestore = null;
 let firebaseDisponivel = false;
+let offsetSemanas = 0;
+let agendamentosAtuais = [];
 
 function mostrarMensagem(texto, tipo) {
     mensagemLogin.className = `alert alert-${tipo}`;
@@ -120,20 +126,47 @@ function ordenarAgendamentos(agendamentos) {
     });
 }
 
-function gerarDiasAgenda(quantidade = 7) {
+function formatarDataISO(data) {
+    const ano = data.getFullYear();
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const dia = String(data.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+}
+
+function calcularInicioSemana(data) {
+    const copia = new Date(data);
+    const diaDaSemana = copia.getDay();
+    const diferenca = diaDaSemana === 0 ? -6 : 1 - diaDaSemana;
+    copia.setDate(copia.getDate() + diferenca);
+    copia.setHours(0, 0, 0, 0);
+    return copia;
+}
+
+function gerarDiasAgenda(quantidade = 7, deslocamentoSemanas = 0) {
     const dias = [];
-    const hoje = new Date();
+    const inicioSemana = calcularInicioSemana(new Date());
+    inicioSemana.setDate(inicioSemana.getDate() + (deslocamentoSemanas * 7));
 
     for (let indice = 0; indice < quantidade; indice += 1) {
-        const data = new Date(hoje);
-        data.setDate(hoje.getDate() + indice);
+        const data = new Date(inicioSemana);
+        data.setDate(inicioSemana.getDate() + indice);
 
-        const valor = data.toISOString().split('T')[0];
+        const valor = formatarDataISO(data);
         const label = data.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit' });
         dias.push({ valor, label });
     }
 
     return dias;
+}
+
+function atualizarLabelSemana() {
+    const inicioSemana = calcularInicioSemana(new Date());
+    inicioSemana.setDate(inicioSemana.getDate() + (offsetSemanas * 7));
+
+    const fimSemana = new Date(inicioSemana);
+    fimSemana.setDate(inicioSemana.getDate() + 6);
+
+    labelSemanaAtual.textContent = `Semana de ${inicioSemana.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} até ${fimSemana.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`;
 }
 
 function renderizarAgenda(agendamentos) {
@@ -144,7 +177,8 @@ function renderizarAgenda(agendamentos) {
         return;
     }
 
-    const dias = gerarDiasAgenda(7);
+    const dias = gerarDiasAgenda(7, offsetSemanas);
+    atualizarLabelSemana();
     const grid = document.createElement('div');
     grid.className = 'agenda-grid';
 
@@ -183,6 +217,7 @@ function renderizarAgenda(agendamentos) {
 }
 
 function renderizarAgendamentos(agendamentos) {
+    agendamentosAtuais = agendamentos;
     const agendamentosOrdenados = ordenarAgendamentos(agendamentos);
     listaPainel.innerHTML = '';
     renderizarAgenda(agendamentosOrdenados);
@@ -234,6 +269,7 @@ function fecharModalEditar() {
 function entrarNoPainel() {
     areaPainel.classList.remove('d-none');
     sessionStorage.setItem('gsbarber-auth', 'true');
+    offsetSemanas = 0;
     mostrarMensagem('Login realizado com sucesso.', 'success');
     carregarAgendamentos();
 }
@@ -298,6 +334,15 @@ async function salvarEdicao(agendamentoAtualizado) {
     }
 }
 
+function navegarSemana(deslocamento) {
+    offsetSemanas += deslocamento;
+    if (agendamentosAtuais.length > 0) {
+        renderizarAgenda(ordenarAgendamentos(agendamentosAtuais));
+    } else {
+        atualizarLabelSemana();
+    }
+}
+
 formularioLogin.addEventListener('submit', (evento) => {
     evento.preventDefault();
 
@@ -311,6 +356,16 @@ formularioLogin.addEventListener('submit', (evento) => {
     }
 });
 
+botaoSemanaAnterior.addEventListener('click', () => navegarSemana(-1));
+botaoHoje.addEventListener('click', () => {
+    offsetSemanas = 0;
+    if (agendamentosAtuais.length > 0) {
+        renderizarAgenda(ordenarAgendamentos(agendamentosAtuais));
+    } else {
+        atualizarLabelSemana();
+    }
+});
+botaoSemanaSeguinte.addEventListener('click', () => navegarSemana(1));
 botaoSair.addEventListener('click', sairDoPainel);
 botaoFecharModal.addEventListener('click', fecharModalEditar);
 botaoCancelarEdicao.addEventListener('click', fecharModalEditar);
