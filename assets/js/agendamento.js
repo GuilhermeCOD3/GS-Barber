@@ -2,16 +2,24 @@
 // A ideia é manter o fluxo simples, com persistência local e sincronização opcional ao Firebase.
 
 const diasParaExibir = 14;
-const horariosPadrao = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+const duracaoPadrao = 45;
 const permitirHorariosDuplicados = true;
 let agendamentosSalvos = [];
+let barbeirosDisponiveis = [];
 
+const selectBarbeiro = document.getElementById('barbeiro');
+const selectDuracao = document.getElementById('duracao');
 const selectData = document.getElementById('data');
 const inputHorario = document.getElementById('horario');
 const containerHorarios = document.getElementById('horarios-container');
 const listaAgendamentos = document.getElementById('lista-agendamentos');
 const formulario = document.getElementById('form-agendamento');
 const mensagem = document.getElementById('mensagem');
+const resumoAgendamento = document.getElementById('resumo-agendamento');
+const inputNome = document.getElementById('nome');
+const inputTelefone = document.getElementById('telefone');
+const selectServico = document.getElementById('servico');
+const inputObservacoes = document.getElementById('observacoes');
 
 let firestore = null;
 let firebaseDisponivel = false;
@@ -26,15 +34,40 @@ function carregarAgendamentos() {
     }
 }
 
+function carregarBarbeiros() {
+    const config = window.gsBarberConfig?.carregarConfig();
+    const barbeiros = config?.barbeiros || [];
+    barbeirosDisponiveis = barbeiros;
+
+    selectBarbeiro.innerHTML = '';
+    barbeiros.forEach((barbeiro) => {
+        const option = document.createElement('option');
+        option.value = barbeiro.id;
+        option.textContent = barbeiro.nome;
+        selectBarbeiro.appendChild(option);
+    });
+
+    if (config?.activeBarbeiroId) {
+        selectBarbeiro.value = config.activeBarbeiroId;
+    }
+
+    const barbeiroSelecionado = barbeiros.find((item) => item.id === selectBarbeiro.value) || barbeiros[0];
+    if (barbeiroSelecionado?.duracaoMinutos) {
+        selectDuracao.value = String(barbeiroSelecionado.duracaoMinutos);
+    }
+}
+
 function salvarLocalmente() {
     localStorage.setItem('agendamentosGS', JSON.stringify(agendamentosSalvos));
 }
 
 function sincronizarAgendamentos() {
     carregarAgendamentos();
+    carregarBarbeiros();
     popularDatas();
     popularHorarios();
     mostrarAgendamentos();
+    atualizarResumoAgendamento();
 }
 
 function inicializarFirebase() {
@@ -73,6 +106,13 @@ function salvarNoFirebase(dados) {
     });
 }
 
+function formatarDataLocal(data) {
+    const ano = data.getFullYear();
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const dia = String(data.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+}
+
 function gerarDatas() {
     const datas = [];
     const hoje = new Date();
@@ -87,7 +127,7 @@ function gerarDatas() {
             continue;
         }
 
-        const valor = data.toISOString().split('T')[0];
+        const valor = formatarDataLocal(data);
         const label = data.toLocaleDateString('pt-BR', {
             weekday: 'long',
             day: '2-digit',
@@ -109,21 +149,54 @@ function popularDatas() {
         option.textContent = item.label;
         selectData.appendChild(option);
     });
+
+    if (selectData.options.length > 0) {
+        selectData.value = selectData.options[0].value;
+    }
 }
 
-function horariosDisponiveis(dataEscolhida) {
-    const ocupados = agendamentosSalvos
-        .filter((agendamento) => agendamento.data === dataEscolhida)
-        .map((agendamento) => agendamento.horario);
+function gerarHorariosPadrao(duracao, horarioInicio = '09:00', horarioFim = '19:00') {
+    if (window.agendaUtils?.gerarHorarios) {
+        return window.agendaUtils.gerarHorarios(horarioInicio, horarioFim, duracao);
+    }
 
-    return horariosPadrao.filter((horario) => !ocupados.includes(horario));
+    const horarios = [];
+    const passo = Number(duracao) || 45;
+    const inicioMinutos = (Number(horarioInicio.split(':')[0]) * 60) + Number(horarioInicio.split(':')[1] || 0);
+    const fimMinutos = (Number(horarioFim.split(':')[0]) * 60) + Number(horarioFim.split(':')[1] || 0);
+    let atual = inicioMinutos;
+
+    while (atual + passo <= fimMinutos) {
+        const horas = Math.floor(atual / 60);
+        const minutos = atual % 60;
+        horarios.push(`${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}`);
+        atual += passo;
+    }
+
+    return horarios;
+}
+
+function horariosDisponiveis(dataEscolhida, barbeiroId, duracao) {
+    const config = window.gsBarberConfig?.carregarConfig();
+    const barbeiroSelecionado = (config?.barbeiros || []).find((item) => item.id === barbeiroId) || (config?.barbeiros || [])[0];
+    const horarios = gerarHorariosPadrao(duracao, barbeiroSelecionado?.horarioInicio || '09:00', barbeiroSelecionado?.horarioFim || '19:00');
+    const agendamentosDoBarbeiro = agendamentosSalvos.filter((agendamento) => agendamento.data === dataEscolhida && (!agendamento.barbeiroId || agendamento.barbeiroId === barbeiroId));
+
+    return horarios.filter((horario) => {
+        return !agendamentosDoBarbeiro.some((agendamento) => window.agendaUtils?.horarioEstaOcupado
+            ? window.agendaUtils.horarioEstaOcupado(horario, duracao, agendamento, dataEscolhida, barbeiroId)
+            : agendamento.horario === horario);
+    });
 }
 
 function popularHorarios() {
     const dataEscolhida = selectData.value;
-    const horarios = horariosDisponiveis(dataEscolhida);
+    const barbeiroId = selectBarbeiro.value;
+    const barbeiroSelecionado = barbeirosDisponiveis.find((item) => item.id === barbeiroId) || barbeirosDisponiveis[0];
+    const duracao = Number(selectDuracao.value || barbeiroSelecionado?.duracaoMinutos || 45);
+    const horarios = horariosDisponiveis(dataEscolhida, barbeiroId, duracao);
     const ocupados = agendamentosSalvos
-        .filter((agendamento) => agendamento.data === dataEscolhida)
+        .filter((agendamento) => agendamento.data === dataEscolhida && (!agendamento.barbeiroId || agendamento.barbeiroId === barbeiroId))
         .map((agendamento) => agendamento.horario);
 
     containerHorarios.innerHTML = '';
@@ -144,7 +217,7 @@ function popularHorarios() {
         return;
     }
 
-    horariosPadrao.forEach((horario) => {
+    horarios.forEach((horario) => {
         const botao = document.createElement('button');
         botao.type = 'button';
         botao.className = 'horario-btn';
@@ -161,10 +234,36 @@ function popularHorarios() {
             document.querySelectorAll('.horario-btn').forEach((item) => item.classList.remove('ativo'));
             botao.classList.add('ativo');
             inputHorario.value = horario;
+            atualizarResumoAgendamento();
         });
 
         containerHorarios.appendChild(botao);
     });
+
+    atualizarResumoAgendamento();
+}
+
+function formatarDataParaResumo(data) {
+    if (!data) return 'Escolha uma data';
+    const [ano, mes, dia] = data.split('-').map(Number);
+    const dataObj = new Date(ano, mes - 1, dia);
+    return dataObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+}
+
+function atualizarResumoAgendamento() {
+    const nome = inputNome.value.trim() || 'Seu nome';
+    const servico = selectServico.value || 'Aguardando seleção';
+    const data = formatarDataParaResumo(selectData.value);
+    const horario = inputHorario.value || 'Selecione um horário';
+    const barbeiro = barbeirosDisponiveis.find((item) => item.id === selectBarbeiro.value) || barbeirosDisponiveis[0];
+
+    resumoAgendamento.innerHTML = `
+        <div class="summary-item"><span>Nome</span><strong>${nome}</strong></div>
+        <div class="summary-item"><span>Serviço</span><strong>${servico}</strong></div>
+        <div class="summary-item"><span>Barbeiro</span><strong>${barbeiro?.nome || 'Não informado'}</strong></div>
+        <div class="summary-item"><span>Data</span><strong>${data}</strong></div>
+        <div class="summary-item"><span>Horário</span><strong>${horario}</strong></div>
+    `;
 }
 
 function mostrarAgendamentos() {
@@ -192,17 +291,27 @@ function mostrarMensagem(texto, tipo) {
     mensagem.classList.remove('d-none');
 }
 
+[inputNome, inputTelefone, selectServico, inputObservacoes].forEach((campo) => {
+    campo.addEventListener('input', atualizarResumoAgendamento);
+    campo.addEventListener('change', atualizarResumoAgendamento);
+});
+
 formulario.addEventListener('submit', async (evento) => {
     evento.preventDefault();
 
+    const barbeiroSelecionado = barbeirosDisponiveis.find((item) => item.id === selectBarbeiro.value) || barbeirosDisponiveis[0];
+    const duracaoSelecionada = Number(selectDuracao.value) || 45;
     const dados = {
         id: `ag-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        nome: document.getElementById('nome').value.trim(),
-        telefone: document.getElementById('telefone').value.trim(),
-        servico: document.getElementById('servico').value,
+        nome: inputNome.value.trim(),
+        telefone: inputTelefone.value.trim(),
+        servico: selectServico.value,
         data: selectData.value,
         horario: inputHorario.value,
-        observacoes: document.getElementById('observacoes').value.trim()
+        duracaoMinutos: duracaoSelecionada,
+        barbeiroId: barbeiroSelecionado?.id || '',
+        barbeiroNome: barbeiroSelecionado?.nome || '',
+        observacoes: inputObservacoes.value.trim()
     };
 
     if (!dados.nome || !dados.telefone || !dados.servico || !dados.data || !dados.horario) {
@@ -215,7 +324,7 @@ formulario.addEventListener('submit', async (evento) => {
     salvarLocalmente();
 
     const salvoNoFirebase = await salvarNoFirebase(dados);
-    const mensagemWhatsApp = `Olá! Tenho um novo agendamento:%0A%0ANome: ${encodeURIComponent(dados.nome)}%0ATelefone: ${encodeURIComponent(dados.telefone)}%0AServiço: ${encodeURIComponent(dados.servico)}%0AData: ${encodeURIComponent(dados.data)}%0AHorário: ${encodeURIComponent(dados.horario)}%0AObservações: ${encodeURIComponent(dados.observacoes || 'Nenhuma')}`;
+    const mensagemWhatsApp = `Olá! Tenho um novo agendamento:%0A%0ANome: ${encodeURIComponent(dados.nome)}%0ATelefone: ${encodeURIComponent(dados.telefone)}%0AServiço: ${encodeURIComponent(dados.servico)}%0ABarbeiro: ${encodeURIComponent(dados.barbeiroNome || 'Não informado')}%0AData: ${encodeURIComponent(dados.data)}%0AHorário: ${encodeURIComponent(dados.horario)}%0AObservações: ${encodeURIComponent(dados.observacoes || 'Nenhuma')}`;
 
     if (salvoNoFirebase) {
         mostrarMensagem('Agendamento confirmado e salvo no Firebase!', 'success');
@@ -226,12 +335,29 @@ formulario.addEventListener('submit', async (evento) => {
     window.open(`https://wa.me/5528999325487?text=${mensagemWhatsApp}`, '_blank', 'noopener,noreferrer');
 
     formulario.reset();
+    inputHorario.value = '';
+    atualizarResumoAgendamento();
     carregarAgendamentos();
     popularHorarios();
     mostrarAgendamentos();
 });
 
-selectData.addEventListener('change', popularHorarios);
+selectBarbeiro.addEventListener('change', () => {
+    const barbeiroSelecionado = barbeirosDisponiveis.find((item) => item.id === selectBarbeiro.value) || barbeirosDisponiveis[0];
+    if (barbeiroSelecionado?.duracaoMinutos) {
+        selectDuracao.value = String(barbeiroSelecionado.duracaoMinutos);
+    }
+    popularHorarios();
+    atualizarResumoAgendamento();
+});
+selectDuracao.addEventListener('change', () => {
+    popularHorarios();
+    atualizarResumoAgendamento();
+});
+selectData.addEventListener('change', () => {
+    popularHorarios();
+    atualizarResumoAgendamento();
+});
 window.addEventListener('storage', (evento) => {
     if (evento.key === 'agendamentosGS') {
         sincronizarAgendamentos();
@@ -242,6 +368,8 @@ window.addEventListener('focus', () => {
 });
 inicializarFirebase();
 carregarAgendamentos();
+carregarBarbeiros();
 popularDatas();
 popularHorarios();
 mostrarAgendamentos();
+atualizarResumoAgendamento();

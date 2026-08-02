@@ -13,6 +13,7 @@
                 horarioTexto: 'Segunda a sábado, das 9h às 19h',
                 horarioInicio: '09:00',
                 horarioFim: '19:00',
+                duracaoMinutos: 45,
                 descricao: 'Barbearia premium'
             }
         ]
@@ -36,6 +37,7 @@
                 horarioTexto: item.horarioTexto || `${item.horarioInicio || base.barbeiros[0].horarioInicio} às ${item.horarioFim || base.barbeiros[0].horarioFim}`,
                 horarioInicio: item.horarioInicio || base.barbeiros[0].horarioInicio,
                 horarioFim: item.horarioFim || base.barbeiros[0].horarioFim,
+                duracaoMinutos: Number(item.duracaoMinutos || base.barbeiros[0].duracaoMinutos || 45),
                 descricao: item.descricao || base.barbeiros[0].descricao
             }))
             : base.barbeiros;

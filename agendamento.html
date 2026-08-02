@@ -18,10 +18,15 @@
     </header>
 
     <main class="container py-5">
-        <section class="row g-4">
+        <section class="row g-4 align-items-start">
             <div class="col-lg-7">
-                <div class="card-panel">
+                <div class="card-panel mb-4">
                     <div class="card-body p-4 p-lg-5">
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <span class="pill-step">1. Escolha seu serviço</span>
+                            <span class="pill-step">2. Defina data e horário</span>
+                            <span class="pill-step">3. Confirme no WhatsApp</span>
+                        </div>
                         <p class="eyebrow">Agendamento</p>
                         <h1 class="display-6 fw-bold mb-3">Reserve o seu horário com facilidade</h1>
                         <p class="text-muted mb-4">
@@ -56,6 +61,19 @@
                                 </div>
 
                                 <div class="col-md-6">
+                                    <label for="barbeiro" class="form-label">Barbeiro</label>
+                                    <select id="barbeiro" class="form-select" required></select>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="duracao" class="form-label">Duração</label>
+                                    <select id="duracao" class="form-select">
+                                        <option value="45">45 minutos</option>
+                                        <option value="30">30 minutos</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6">
                                     <label for="data" class="form-label">Data</label>
                                     <select id="data" class="form-select" required></select>
                                 </div>
@@ -81,11 +99,17 @@
             </div>
 
             <div class="col-lg-5">
-                <div class="card-panel">
+                <div class="card-panel sticky-top">
                     <div class="card-body p-4 p-lg-5">
                         <p class="eyebrow">Resumo</p>
-                        <h2 class="h4 fw-bold mb-3">Horários reservados</h2>
-                        <p class="text-muted mb-4">
+                        <h2 class="h4 fw-bold mb-3">Seu agendamento</h2>
+                        <div id="resumo-agendamento" class="summary-box">
+                            <div class="summary-item"><span>Nome</span><strong>Seu nome</strong></div>
+                            <div class="summary-item"><span>Serviço</span><strong>Aguardando seleção</strong></div>
+                            <div class="summary-item"><span>Data</span><strong>Escolha uma data</strong></div>
+                            <div class="summary-item"><span>Horário</span><strong>Selecione um horário</strong></div>
+                        </div>
+                        <p class="text-muted mb-3 mt-4">
                             Os horários já marcados ficam bloqueados automaticamente para evitar conflitos.
                         </p>
 
@@ -106,6 +130,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
     <script src="firebase/firebase-config.js"></script>
     <script src="assets/js/config.js"></script>
+    <script src="assets/js/agenda-utils.js"></script>
     <script src="assets/js/agendamento.js"></script>
 </body>
 </html>

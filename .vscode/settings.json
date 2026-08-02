@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^python -m http\\.server 8000 --directory '/c/Users/gui/Desktop/Barbearia-Gui'$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

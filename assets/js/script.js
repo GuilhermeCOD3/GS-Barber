@@ -36,8 +36,11 @@ document.addEventListener('DOMContentLoaded', () => {
             coluna.innerHTML = `
                 <article class="service-card">
                     <div class="service-icon">${servico.icone}</div>
-                    <h3 class="h5 text-gold">${servico.nome}</h3>
-                    <p class="text-muted mb-0">${servico.descricao}</p>
+                    <div class="d-flex justify-content-between align-items-start gap-2">
+                        <h3 class="h5 text-gold mb-0">${servico.nome}</h3>
+                        <span class="service-badge">Popular</span>
+                    </div>
+                    <p class="text-muted mb-0 mt-3">${servico.descricao}</p>
                 </article>
             `;
 

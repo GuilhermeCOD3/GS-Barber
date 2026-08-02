@@ -15,7 +15,17 @@ const inputConfigLogo = document.getElementById('config-logo');
 const inputConfigTelefone = document.getElementById('config-telefone');
 const inputConfigWhatsapp = document.getElementById('config-whatsapp');
 const inputConfigHorario = document.getElementById('config-horario');
+const selectConfigDuracao = document.getElementById('config-duracao');
 const inputConfigDescricao = document.getElementById('config-descricao');
+const inputConfigHorarioInicio = document.getElementById('config-horario-inicio');
+const inputConfigHorarioFim = document.getElementById('config-horario-fim');
+const inputConfigHorarioIntervalo = document.getElementById('config-horario-intervalo');
+const inputNovoBarbeiro = document.getElementById('config-novo-barbeiro');
+const inputUsuarioBarbeiro = document.getElementById('config-usuario-barbeiro');
+const inputSenhaBarbeiro = document.getElementById('config-senha-barbeiro');
+const botaoAdicionarBarbeiro = document.getElementById('botao-adicionar-barbeiro');
+const listaBarbeiros = document.getElementById('lista-barbeiros');
+const listaHorarios = document.getElementById('lista-horarios');
 const botaoSemanaAnterior = document.getElementById('botao-semana-anterior');
 const botaoHoje = document.getElementById('botao-hoje');
 const botaoSemanaSeguinte = document.getElementById('botao-semana-seguinte');
@@ -34,7 +44,8 @@ const textareaEditarObservacoes = document.getElementById('editar-observacoes');
 
 const usuarioPadrao = 'barbeiro';
 const senhaPadrao = '123456';
-const horariosAgenda = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+let usuariosBarbeiros = {};
+let barbeirosAtivos = [];
 
 let firestore = null;
 let firebaseDisponivel = false;
@@ -45,6 +56,97 @@ function mostrarMensagem(texto, tipo) {
     mensagemLogin.className = `alert alert-${tipo}`;
     mensagemLogin.textContent = texto;
     mensagemLogin.classList.remove('d-none');
+}
+
+function carregarUsuariosBarbeiros() {
+    try {
+        const salvos = JSON.parse(localStorage.getItem('gsbarber-usuarios') || '{}');
+        usuariosBarbeiros = salvos && typeof salvos === 'object' ? salvos : {};
+    } catch (erro) {
+        console.warn('Não foi possível carregar os usuários de barbeiros:', erro);
+        usuariosBarbeiros = {};
+    }
+}
+
+function salvarUsuariosBarbeiros() {
+    localStorage.setItem('gsbarber-usuarios', JSON.stringify(usuariosBarbeiros));
+}
+
+function carregarBarbeirosConfig() {
+    const config = window.gsBarberConfig?.carregarConfig();
+    barbeirosAtivos = Array.isArray(config?.barbeiros) ? config.barbeiros : [];
+    return barbeirosAtivos;
+}
+
+function salvarBarbeirosConfig(novaLista) {
+    const config = window.gsBarberConfig?.carregarConfig();
+    const novaConfig = { ...config, barbeiros: novaLista };
+    window.gsBarberConfig?.salvarConfig(novaConfig);
+    window.gsBarberConfig?.aplicarConfig(novaConfig);
+    return novaConfig;
+}
+
+function renderizarListaBarbeiros() {
+    const barbeiros = carregarBarbeirosConfig();
+    listaBarbeiros.innerHTML = '';
+
+    if (!barbeiros.length) {
+        listaBarbeiros.innerHTML = '<div class="text-muted small">Nenhum barbeiro cadastrado.</div>';
+        return;
+    }
+
+    barbeiros.forEach((barbeiro) => {
+        const item = document.createElement('div');
+        item.className = 'd-flex justify-content-between align-items-center gap-2 p-2 rounded border border-gold';
+        item.innerHTML = `
+            <div>
+                <strong>${escaparHTML(barbeiro.nome)}</strong><br>
+                <small class="text-muted">${escaparHTML(barbeiro.usuario || 'Sem login')}</small>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-gold" data-acao="ativar-barbeiro" data-id="${escaparHTML(barbeiro.id)}">Ativar</button>
+                <button class="btn btn-sm btn-remover" data-acao="remover-barbeiro" data-id="${escaparHTML(barbeiro.id)}">Remover</button>
+            </div>
+        `;
+        listaBarbeiros.appendChild(item);
+    });
+}
+
+function obterHorariosAgenda(config = window.gsBarberConfig?.carregarConfig()) {
+    const barbeiro = window.gsBarberConfig?.getBarbeiroAtivo(config);
+    if (window.agendaUtils?.gerarHorarios) {
+        return window.agendaUtils.gerarHorarios(barbeiro?.horarioInicio || '09:00', barbeiro?.horarioFim || '19:00', barbeiro?.duracaoMinutos || 45);
+    }
+
+    const horarios = [];
+    const duracao = Number(barbeiro?.duracaoMinutos || 45);
+    const inicioMinutos = (Number((barbeiro?.horarioInicio || '09:00').split(':')[0]) * 60) + Number((barbeiro?.horarioInicio || '09:00').split(':')[1] || 0);
+    const fimMinutos = (Number((barbeiro?.horarioFim || '19:00').split(':')[0]) * 60) + Number((barbeiro?.horarioFim || '19:00').split(':')[1] || 0);
+
+    for (let atual = inicioMinutos; atual + duracao <= fimMinutos; atual += duracao) {
+        const horas = Math.floor(atual / 60);
+        const minutos = atual % 60;
+        horarios.push(`${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}`);
+    }
+
+    return horarios;
+}
+
+function renderizarListaHorarios() {
+    const config = window.gsBarberConfig?.carregarConfig();
+    const barbeiro = window.gsBarberConfig?.getBarbeiroAtivo(config);
+    const horariosTexto = `${barbeiro?.horarioInicio || '09:00'} às ${barbeiro?.horarioFim || '19:00'} • ${barbeiro?.duracaoMinutos || 45} min`;
+    const horarios = obterHorariosAgenda(config);
+    listaHorarios.innerHTML = `
+        <div class="border rounded p-2">
+            <strong>Horário atual</strong><br>
+            <span class="text-muted">${escaparHTML(horariosTexto)}</span>
+        </div>
+        <div class="border rounded p-2 mt-2">
+            <strong>Slots disponíveis</strong><br>
+            <span class="text-muted">${escaparHTML(horarios.join(', '))}</span>
+        </div>
+    `;
 }
 
 function escaparHTML(texto) {
@@ -189,6 +291,7 @@ function renderizarAgenda(agendamentos) {
     }
 
     const dias = gerarDiasAgenda(7, offsetSemanas);
+    const horarios = obterHorariosAgenda();
     atualizarLabelSemana();
     const grid = document.createElement('div');
     grid.className = 'agenda-grid';
@@ -198,7 +301,7 @@ function renderizarAgenda(agendamentos) {
         coluna.className = 'agenda-day';
         coluna.innerHTML = `<div class="agenda-day-title">${escaparHTML(dia.label)}</div>`;
 
-        horariosAgenda.forEach((horario) => {
+        horarios.forEach((horario) => {
             const agendamentoDoHorario = agendamentos.find((item) => item.data === dia.valor && item.horario === horario);
             const slot = document.createElement('button');
             slot.type = 'button';
@@ -246,6 +349,7 @@ function renderizarAgendamentos(agendamentos) {
                 <div>
                     <strong>${escaparHTML(agendamento.nome)}</strong><br>
                     <span class="text-muted">${escaparHTML(agendamento.servico)}</span><br>
+                    <span class="text-muted">${escaparHTML(agendamento.barbeiroNome || 'Barbeiro não informado')}</span><br>
                     <span class="text-muted">${escaparHTML(formatarData(agendamento.data))}</span><br>
                     <span class="text-muted">${escaparHTML(agendamento.horario)}</span><br>
                     <span class="text-muted">${escaparHTML(agendamento.telefone)}</span>
@@ -283,6 +387,14 @@ function entrarNoPainel() {
     offsetSemanas = 0;
     mostrarMensagem('Login realizado com sucesso.', 'success');
     carregarAgendamentos();
+    renderizarListaBarbeiros();
+    renderizarListaHorarios();
+}
+
+function verificarSessao() {
+    if (sessionStorage.getItem('gsbarber-auth') === 'true') {
+        entrarNoPainel();
+    }
 }
 
 function sairDoPainel() {
@@ -304,7 +416,11 @@ function abrirModalConfiguracoes() {
     inputConfigTelefone.value = barbeiro?.telefone || '';
     inputConfigWhatsapp.value = barbeiro?.whatsapp || '';
     inputConfigHorario.value = barbeiro?.horarioTexto || '';
+    selectConfigDuracao.value = String(barbeiro?.duracaoMinutos || 45);
     inputConfigDescricao.value = barbeiro?.descricao || '';
+    inputConfigHorarioInicio.value = barbeiro?.horarioInicio || '09:00';
+    inputConfigHorarioFim.value = barbeiro?.horarioFim || '19:00';
+    inputConfigHorarioIntervalo.value = barbeiro?.duracaoMinutos || 45;
 
     modalConfiguracoes.classList.remove('d-none');
 }
@@ -379,17 +495,70 @@ formularioLogin.addEventListener('submit', (evento) => {
 
     const usuario = document.getElementById('usuario').value.trim();
     const senha = document.getElementById('senha').value.trim();
+    carregarUsuariosBarbeiros();
 
     if (usuario === usuarioPadrao && senha === senhaPadrao) {
         entrarNoPainel();
-    } else {
-        mostrarMensagem('Usuário ou senha incorretos.', 'danger');
+        return;
     }
+
+    const usuarioBarbeiro = Object.entries(usuariosBarbeiros).find(([, dados]) => dados.usuario === usuario && dados.senha === senha);
+    if (usuarioBarbeiro) {
+        entrarNoPainel();
+        return;
+    }
+
+    mostrarMensagem('Usuário ou senha incorretos.', 'danger');
 });
 
 botaoConfiguracoes.addEventListener('click', abrirModalConfiguracoes);
 botaoFecharConfiguracoes.addEventListener('click', fecharModalConfiguracoes);
 botaoCancelarConfiguracoes.addEventListener('click', fecharModalConfiguracoes);
+botaoAdicionarBarbeiro.addEventListener('click', () => {
+    const nome = inputNovoBarbeiro.value.trim();
+    const usuario = inputUsuarioBarbeiro.value.trim();
+    const senha = inputSenhaBarbeiro.value.trim();
+
+    if (!nome || !usuario || !senha) {
+        mostrarMensagem('Preencha nome, usuário e senha do barbeiro.', 'warning');
+        return;
+    }
+
+    const configAtual = window.gsBarberConfig?.carregarConfig();
+    const novoBarbeiro = {
+        id: window.gsBarberConfig?.gerarId?.() || `barbeiro-${Date.now()}`,
+        nome,
+        usuario,
+        senha,
+        logoUrl: configAtual?.barbeiros?.[0]?.logoUrl || 'assets/img/icons/WhatsApp Image 2026-07-17 at 18.20.46.jpeg',
+        telefone: configAtual?.barbeiros?.[0]?.telefone || '(28) 99932-5487',
+        whatsapp: configAtual?.barbeiros?.[0]?.whatsapp || '5528999325487',
+        horarioTexto: configAtual?.barbeiros?.[0]?.horarioTexto || 'Segunda a sábado, das 9h às 19h',
+        horarioInicio: configAtual?.barbeiros?.[0]?.horarioInicio || '09:00',
+        horarioFim: configAtual?.barbeiros?.[0]?.horarioFim || '19:00',
+        duracaoMinutos: configAtual?.barbeiros?.[0]?.duracaoMinutos || 45,
+        descricao: configAtual?.barbeiros?.[0]?.descricao || 'Barbearia premium'
+    };
+
+    const listaAtual = Array.isArray(configAtual?.barbeiros) ? configAtual.barbeiros : [];
+    const novaConfig = {
+        ...configAtual,
+        activeBarbeiroId: novoBarbeiro.id,
+        barbeiros: [...listaAtual, novoBarbeiro]
+    };
+
+    usuariosBarbeiros[novoBarbeiro.id] = { usuario, senha };
+    salvarUsuariosBarbeiros();
+    window.gsBarberConfig?.salvarConfig(novaConfig);
+    window.gsBarberConfig?.aplicarConfig(novaConfig);
+    inputNovoBarbeiro.value = '';
+    inputUsuarioBarbeiro.value = '';
+    inputSenhaBarbeiro.value = '';
+    mostrarMensagem(`Barbeiro ${nome} adicionado.`, 'success');
+    abrirModalConfiguracoes();
+    renderizarListaBarbeiros();
+    renderizarListaHorarios();
+});
 
 formularioConfiguracoes.addEventListener('submit', (evento) => {
     evento.preventDefault();
@@ -404,8 +573,9 @@ formularioConfiguracoes.addEventListener('submit', (evento) => {
         telefone: inputConfigTelefone.value.trim(),
         whatsapp: inputConfigWhatsapp.value.trim(),
         horarioTexto: inputConfigHorario.value.trim(),
-        horarioInicio: barbeiroAtivo?.horarioInicio || '09:00',
-        horarioFim: barbeiroAtivo?.horarioFim || '19:00',
+        horarioInicio: inputConfigHorarioInicio.value || '09:00',
+        horarioFim: inputConfigHorarioFim.value || '19:00',
+        duracaoMinutos: Number(inputConfigHorarioIntervalo.value || selectConfigDuracao.value || 45),
         descricao: inputConfigDescricao.value.trim()
     };
 
@@ -416,8 +586,9 @@ formularioConfiguracoes.addEventListener('submit', (evento) => {
 
     window.gsBarberConfig?.salvarConfig(novaConfig);
     window.gsBarberConfig?.aplicarConfig(novaConfig);
-    mostrarMensagem('Configuração do barbeiro salva.', 'success');
+    mostrarMensagem('Configuração salva.', 'success');
     fecharModalConfiguracoes();
+    renderizarListaHorarios();
 });
 
 botaoSemanaAnterior.addEventListener('click', () => navegarSemana(-1));
@@ -471,6 +642,46 @@ listaPainel.addEventListener('click', async (evento) => {
         if (agendamento) {
             abrirModalEditar(agendamento);
         }
+    }
+});
+
+listaBarbeiros.addEventListener('click', (evento) => {
+    const botao = evento.target.closest('button');
+    if (!botao) return;
+
+    const id = botao.dataset.id;
+    const configAtual = window.gsBarberConfig?.carregarConfig();
+
+    if (botao.dataset.acao === 'ativar-barbeiro') {
+        window.gsBarberConfig?.alterarBarbeiroAtivo(id);
+        mostrarMensagem('Barbeiro ativo atualizado.', 'success');
+        renderizarListaBarbeiros();
+        renderizarListaHorarios();
+        return;
+    }
+
+    if (botao.dataset.acao === 'remover-barbeiro' && id) {
+        const barbeiros = Array.isArray(configAtual?.barbeiros) ? configAtual.barbeiros : [];
+        const filtrados = barbeiros.filter((item) => item.id !== id);
+
+        if (filtrados.length === 0) {
+            mostrarMensagem('É preciso manter pelo menos um barbeiro.', 'warning');
+            return;
+        }
+
+        const novaConfig = {
+            ...configAtual,
+            activeBarbeiroId: filtrados[0].id,
+            barbeiros: filtrados
+        };
+
+        delete usuariosBarbeiros[id];
+        salvarUsuariosBarbeiros();
+        window.gsBarberConfig?.salvarConfig(novaConfig);
+        window.gsBarberConfig?.aplicarConfig(novaConfig);
+        mostrarMensagem('Barbeiro removido.', 'success');
+        renderizarListaBarbeiros();
+        renderizarListaHorarios();
     }
 });
 
